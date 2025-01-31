@@ -59,14 +59,14 @@ env_pre() {
 }
 
 install_check() {
-    if [ -f /var/lib/vaultwarden/version.json ]; then
+    if [ -f /usr/src/vaultwarden/version.json ]; then
         curl -s https://hub.docker.com/v2/repositories/vaultwarden/server/tags/alpine | jq -r '.images[] | select(.architecture == "amd64") | {architecture, digest}' > $__vw_temp_path/latest.json
-        if diff $__vw_temp_path/latest.json /var/lib/vaultwarden/version.json; then
+        if diff $__vw_temp_path/latest.json /usr/src/vaultwarden/version.json; then
             echo "Vaultwarden is installed and up to date, exiting..."
             exit 1
         else
             echo "Vaultwarden is installed, but not the latest version. This installation will upgrade Vaultwarden."
-            bash -c "$(curl -L https://github.com/KukiSa/Note/raw/main/vaultwarden-update.sh)"
+            bash -c "$(curl -L https://github.com/dbr4fr/scripts/raw/main/vaultwarden-update.sh)"
             exit 0
         fi
     else
@@ -147,24 +147,24 @@ get_info() {
 }
 
 main_install() {
+    mkdir -p /usr/src/vaultwarden/data /usr/src/vaultwarden/web-vault
     curl -s https://hub.docker.com/v2/repositories/vaultwarden/server/tags/alpine | jq -r '.images[] | select(.architecture == "amd64") | {architecture, digest}' > $__vw_temp_path/latest.json
     curl -o $__vw_temp_path/docker-image-extract https://raw.githubusercontent.com/jjlin/docker-image-extract/main/docker-image-extract
     chmod +x $__vw_temp_path/docker-image-extract
     $__vw_temp_path/docker-image-extract -o $__vw_temp_out vaultwarden/server:alpine
-    cp -f $__vw_temp_out/vaultwarden /usr/bin/vaultwarden
-    chmod +x /usr/bin/vaultwarden
-    mkdir -p /var/lib/vaultwarden/data /var/lib/vaultwarden/web-vault
-    cp -r $__vw_temp_out/web-vault/. /var/lib/vaultwarden/web-vault
+    cp -f $__vw_temp_out/vaultwarden /usr/src/vaultwarden/vaultwarden
+    chmod +x /usr/src/vaultwarden/vaultwarden  
+    cp -r $__vw_temp_out/web-vault/. /usr/src/vaultwarden/web-vault
     useradd -s /sbin/nologin -M vaultwarden
-    chown -R vaultwarden /var/lib/vaultwarden/data
-    chown -R vaultwarden /var/lib/vaultwarden/web-vault
-    cat > /etc/vaultwarden.env <<EOF
-DATA_FOLDER=/var/lib/vaultwarden/data
+    chown -R vaultwarden /usr/src/vaultwarden/data
+    chown -R vaultwarden /usr/src/vaultwarden/web-vault
+    cat > /usr/src/vaultwarden/vaultwarden.env <<EOF
+DATA_FOLDER=/usr/src/vaultwarden/data
 DATABASE_URL=$__dburl
 IP_HEADER=X-Real-IP
 ICON_CACHE_TTL=2592000
 ICON_CACHE_NEGTTL=259200
-WEB_VAULT_FOLDER=/var/lib/vaultwarden/web-vault
+WEB_VAULT_FOLDER=/usr/src/vaultwarden/web-vault
 WEB_VAULT_ENABLED=true
 ADMIN_TOKEN=$__admin_token
 DOMAIN=https://$__srvfqdn
@@ -177,7 +177,7 @@ ROCKET_WORKERS=10
 EOF
     cat > /etc/systemd/system/vaultwarden.service <<EOF
 [Unit]
-Description=Vaultwarden Server
+Description=vaultwarden
 Documentation=https://github.com/dani-garcia/vaultwarden
 After=network.target $__std_add
 Requires=$__std_add
@@ -185,16 +185,16 @@ Requires=$__std_add
 [Service]
 User=vaultwarden
 Group=vaultwarden
-EnvironmentFile=/etc/vaultwarden.env
-ExecStart=/usr/bin/vaultwarden
+EnvironmentFile=/usr/src/vaultwarden/vaultwarden.env
+ExecStart=/usr/src/vaultwarden/vaultwarden
 LimitNOFILE=1048576
 LimitNPROC=64
 PrivateTmp=true
 PrivateDevices=true
 ProtectHome=true
 ProtectSystem=strict
-WorkingDirectory=/var/lib/vaultwarden
-ReadWriteDirectories=/var/lib/vaultwarden
+WorkingDirectory=/usr/src/vaultwarden
+ReadWriteDirectories=/usr/src/vaultwarden
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 
 [Install]
@@ -203,7 +203,7 @@ EOF
     if [ $__dbtype == "sqlite" ]; then
         sed -i '5d' /etc/systemd/system/vaultwarden.service
     fi
-    curl -s https://hub.docker.com/v2/repositories/vaultwarden/server/tags/alpine | jq -r '.images[] | select(.architecture == "amd64") | {architecture, digest}' > /var/lib/vaultwarden/version.json
+    curl -s https://hub.docker.com/v2/repositories/vaultwarden/server/tags/alpine | jq -r '.images[] | select(.architecture == "amd64") | {architecture, digest}' > /usr/src/vaultwarden/version.json
     systemctl daemon-reload
     systemctl enable vaultwarden
     systemctl start vaultwarden
