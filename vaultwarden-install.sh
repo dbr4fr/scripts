@@ -170,7 +170,6 @@ ADMIN_TOKEN=$__admin_token
 DOMAIN=https://$__srvfqdn
 ROCKET_ADDRESS=127.0.0.1
 ROCKET_PORT=$__rkport
-ROCKET_WORKERS=10
 EOF
     cat > /etc/systemd/system/vaultwarden.service <<EOF
 [Unit]
