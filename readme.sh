@@ -1,6 +1,6 @@
 1. 建立好数据库（使用 SQLite 则不用建立）并记好数据库用户名、数据库密码和数据库名
 2. 执行
-bash -c "$(curl -L https://github.com/dbr4fr/script/raw/main/vaultwarden-install.sh)"
+bash -c "$(curl -L https://github.com/dbr4fr/scripts/raw/main/vaultwarden-install.sh)"
 3. Nginx 配置 SSL 和反向代理，反向代理示例配置如下：
 
 #PROXY-START/
@@ -40,4 +40,4 @@ https://vaultwarden.example.com/admin 路径为管理页面，Admin Token 为 /e
 整好了就可以套 Cloudflare 之类的支持 WS 的 CDN 了
 
 5. 更新
-curl -L https://github.com/dbr4fr/script/raw/main/vaultwarden-update.sh，赋予执行权限后用 Crontab 设置每日执行一次即可。
+curl -L https://github.com/dbr4fr/scripts/raw/main/vaultwarden-update.sh，赋予执行权限后用 Crontab 设置每日执行一次即可。
